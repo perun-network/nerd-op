@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package nftserv
+package asset
+
+import "math/big"
 
 type (
 	Storage interface {
-		Get(id int) ([]byte, error)
+		Get(id *big.Int) ([]byte, error)
 	}
 )
