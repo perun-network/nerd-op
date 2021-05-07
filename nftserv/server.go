@@ -26,6 +26,7 @@ func New(nftStorage nft.Storage) *Server {
 		r:    mux.NewRouter(),
 		nfts: nftStorage,
 	}
+	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet)
 	s.r.HandleFunc("/nft/{token:0x[0-9a-fA-F]{40}}/{id:[0-9]+}", s.handleGETnft).Methods(http.MethodGet)
 	return s
 }
@@ -47,6 +48,10 @@ func (s *Server) ListenAndServe(addr string) error {
 
 func (s *Server) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	return http.ListenAndServeTLS(addr, certFile, keyFile, s.r)
+}
+
+func (s *Server) handleGETstatus(w http.ResponseWriter, _ *http.Request) {
+	w.Write([]byte("OK"))
 }
 
 func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
