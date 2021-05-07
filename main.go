@@ -9,6 +9,7 @@ import (
 
 	"github.com/perun-network/erdstall/operator"
 
+	"github.com/perun-network/nerd-op/asset"
 	"github.com/perun-network/nerd-op/nft"
 	"github.com/perun-network/nerd-op/nftserv"
 )
@@ -37,6 +38,13 @@ func main() {
 	}
 	log.Info("NFT Server config loaded")
 
+	ast, err := asset.NewFileStorage(servCfg.AssetsPath)
+	if err != nil {
+		log.Fatalf("Main: error opening assets storage: %v", err)
+	}
+	ast.SetExtension(servCfg.AssetsExt)
+	log.Info("Assets storage opened")
+
 	op := operator.SetupWithPrototypeEnclave(cfg, nil)
 	go func() {
 		if err := op.Serve(cfg.RPCPort); err != nil {
@@ -44,7 +52,9 @@ func main() {
 		}
 	}()
 
-	serv := nftserv.New(nft.NewMemory())
+	serv := nftserv.New(nft.NewMemory(), ast)
+	// inject new balances from operator
+	op.OnNewBalance(serv.UpdateBalance)
 	addr := servCfg.Host + ":" + servCfg.Port
 	if err := serv.ListenAndServe(addr); err != nil {
 		log.Errorf("Main: NFTServer.ListenAndServe stopped with error %v", err)
