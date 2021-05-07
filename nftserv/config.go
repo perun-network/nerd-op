@@ -12,6 +12,7 @@ type Config struct {
 	Host       string `json:"host"`
 	Port       string `json:"port"`
 	AssetsPath string `json:"assetsPath"`
+	AssetsExt  string `json:"assetsExt"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
