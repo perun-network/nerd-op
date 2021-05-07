@@ -4,6 +4,7 @@ package nftserv
 
 import (
 	"encoding/json"
+	"errors"
 	"math/big"
 	"net/http"
 
@@ -57,7 +58,7 @@ func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
 		tkn, err        = s.nfts.Get(token, id)
 	)
 
-	if err != nft.ErrNotFound {
+	if errors.Is(err, nft.ErrNotFound) {
 		httpError(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -65,7 +66,10 @@ func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(tkn)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if err := json.NewEncoder(w).Encode(tkn); err != nil {
+		log.Errorf("Error JSON-marshalling %v: %v", tkn, err)
+	}
 }
 
 func httpError(w http.ResponseWriter, err string, code int) {
