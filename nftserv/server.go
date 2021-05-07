@@ -13,18 +13,21 @@ import (
 	"github.com/perun-network/erdstall/tee"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/perun-network/nerd-op/asset"
 	"github.com/perun-network/nerd-op/nft"
 )
 
 type Server struct {
-	r    *mux.Router
-	nfts nft.Storage
+	r      *mux.Router
+	nfts   nft.Storage
+	assets asset.Storage
 }
 
-func New(nftStorage nft.Storage) *Server {
+func New(nftStorage nft.Storage, assetStorage asset.Storage) *Server {
 	s := &Server{
-		r:    mux.NewRouter(),
-		nfts: nftStorage,
+		r:      mux.NewRouter(),
+		nfts:   nftStorage,
+		assets: assetStorage,
 	}
 	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet)
 	s.r.HandleFunc("/nft/{token:0x[0-9a-fA-F]{40}}/{id:[0-9]+}", s.handleGETnft).Methods(http.MethodGet)

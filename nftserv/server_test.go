@@ -22,6 +22,7 @@ import (
 	"github.com/perun-network/erdstall/value"
 	vtest "github.com/perun-network/erdstall/value/test"
 
+	"github.com/perun-network/nerd-op/asset"
 	"github.com/perun-network/nerd-op/nft"
 	"github.com/perun-network/nerd-op/nftserv"
 )
@@ -33,7 +34,7 @@ func TestServer(t *testing.T) {
 		require    = require.New(t)
 		rng        = ptest.Prng(t)
 		nfts       = nft.NewMemory()
-		srv        = nftserv.New(nfts)
+		srv        = nftserv.New(nfts, asset.NoStorage{})
 		srverr     = make(chan error, 1)
 		owner, acc = randomAccount(rng, 5)
 		tv         = acc.Values.OrderedValues()[0]
