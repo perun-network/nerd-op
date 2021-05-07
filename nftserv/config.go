@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Host       string `json:"host"`
-	Port       string `json:"port"`
+	Port       uint16 `json:"port"`
 	AssetsPath string `json:"assetsPath"`
 	AssetsExt  string `json:"assetsExt"`
 }
@@ -23,4 +23,9 @@ func ReadConfig(filePath string) (*Config, error) {
 
 	c := new(Config)
 	return c, json.NewDecoder(file).Decode(c)
+}
+
+// Addr returns the string "{Host}:{Port}"
+func (c *Config) Addr() string {
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }

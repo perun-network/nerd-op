@@ -16,7 +16,7 @@ import (
 
 func main() {
 	cfgPath := flag.String("config", "config.json", "operator config file path")
-	servPath := flag.String("server", "config.json", "NFT server config file path")
+	servPath := flag.String("server", "server.json", "NFT server config file path")
 	logLevel := flag.String("log-level", "info", "log level")
 	flag.Parse()
 
@@ -55,8 +55,8 @@ func main() {
 	serv := nftserv.New(nft.NewMemory(), ast)
 	// inject new balances from operator
 	op.OnNewBalance(serv.UpdateBalance)
-	addr := servCfg.Host + ":" + servCfg.Port
+	addr := servCfg.Addr()
 	if err := serv.ListenAndServe(addr); err != nil {
-		log.Errorf("Main: NFTServer.ListenAndServe stopped with error %v", err)
+		log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
 	}
 }
