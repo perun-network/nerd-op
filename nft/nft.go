@@ -42,6 +42,9 @@ type (
 		//
 		// If it is not found ErrNFTNotFound is returned.
 		Get(token common.Address, id *big.Int) (NFT, error)
+
+		// GetAll returns all NFTs in this storage.
+		GetAll() ([]NFT, error)
 	}
 )
 

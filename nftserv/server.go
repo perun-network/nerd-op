@@ -36,6 +36,7 @@ func New(nftStorage nft.Storage, assetStorage asset.Storage) *Server {
 	s.r.HandleFunc("/nft"+tokenIdSelector, s.handlePUTnft).Methods(http.MethodPut)
 	s.r.HandleFunc("/nft"+tokenIdSelector, s.handleGETnft).Methods(http.MethodGet)
 	s.r.HandleFunc("/nft"+tokenIdSelector+"/asset", s.handleGETnftAsset).Methods(http.MethodGet)
+	s.r.HandleFunc("/nfts", s.handleGETnfts).Methods(http.MethodGet)
 	return s
 }
 
@@ -69,6 +70,18 @@ func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("Error JSON-marshalling %v: %v", tkn, err)
 		}
 	})
+}
+
+func (s *Server) handleGETnfts(w http.ResponseWriter, r *http.Request) {
+	tkns, err := s.nfts.GetAll()
+	if err != nil {
+		httpError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if err := json.NewEncoder(w).Encode(tkns); err != nil {
+		log.Errorf("Error JSON-marshalling all tokens: %v", err)
+	}
 }
 
 func (s *Server) handleGETnftAsset(w http.ResponseWriter, r *http.Request) {

@@ -45,6 +45,17 @@ func (m *Memory) Get(token common.Address, id *big.Int) (NFT, error) {
 	return *nft, nil
 }
 
+func (m *Memory) GetAll() (tkns []NFT, _ error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, tnfts := range m.mem {
+		for _, tkn := range tnfts {
+			tkns = append(tkns, *tkn)
+		}
+	}
+	return
+}
+
 func (m *Memory) get(token common.Address, id *big.Int) (*NFT, bool) {
 	tokenNfts, ok := m.mem[token]
 	if !ok {
