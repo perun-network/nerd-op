@@ -94,6 +94,16 @@ func TestServer(t *testing.T) {
 		require.False(tkn.Secret)
 	}
 
+	// GET /nfts
+	tkns := nft.Extract(owner, acc)
+	resp, err := http.Get(url("nfts"))
+	require.NoError(err)
+	requireStatus(t, resp, http.StatusOK)
+	var getnfts []nft.NFT
+	require.NoError(json.NewDecoder(resp.Body).Decode(&getnfts))
+	require.Len(getnfts, len(tkns))
+	require.ElementsMatch(tkns, getnfts)
+
 	// invalid requests
 	expectError := func(geturl string, code int) {
 		resp, err := http.Get(geturl)
@@ -115,13 +125,12 @@ func TestServer(t *testing.T) {
 		require.Equal(strconv.Itoa(int(assetId)), string(data))
 	}
 
-	tkns := nft.Extract(owner, acc)
 	tkn := &tkns[0]
 	expectAsset(tkn.Token, tkn.ID, 0)
 
 	// PUT /nft/...
 	tkn.AssetID = 420
-	resp, err := putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
+	resp, err = putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
 	require.NoError(err)
 	requireStatus(t, resp, http.StatusOK)
 	expectAsset(tkn.Token, tkn.ID, 420)
