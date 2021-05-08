@@ -23,7 +23,7 @@ type (
 
 		// AssetID is the id of the asset in the assets storage. It must be
 		// positive. A value of 0 indicates no asset is set (yet).
-		AssetID uint `json:"assetId"`
+		AssetID uint `json:"assetId,omitempty"`
 		// Secret is set if this is a secret NFT.
 		Secret bool `json:"secret"`
 	}
