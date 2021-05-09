@@ -18,6 +18,8 @@ type jsonNFT struct {
 	Owner   *common.Address `json:"owner"`
 	AssetID *uint           `json:"assetId,omitempty"`
 	Secret  *bool           `json:"secret"`
+	Title   *string         `json:"title"`
+	Desc    *string         `json:"desc"`
 }
 
 const idBase = 10
@@ -29,6 +31,8 @@ func (t NFT) MarshalJSON() ([]byte, error) {
 		Owner:   &t.Owner,
 		AssetID: &t.AssetID,
 		Secret:  &t.Secret,
+		Title:   &t.Title,
+		Desc:    &t.Desc,
 	})
 }
 
@@ -38,6 +42,8 @@ func (t *NFT) UnmarshalJSON(data []byte) error {
 		Owner:   &t.Owner,
 		AssetID: &t.AssetID,
 		Secret:  &t.Secret,
+		Title:   &t.Title,
+		Desc:    &t.Desc,
 	}
 	if err := json.Unmarshal(data, &jt); err != nil {
 		return fmt.Errorf("unmarshalling into jsonNFT: %w", err)
