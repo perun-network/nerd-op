@@ -20,7 +20,7 @@ type jsonNFT struct {
 	Secret  *bool           `json:"secret"`
 }
 
-const idBase = 16
+const idBase = 10
 
 func (t NFT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonNFT{
