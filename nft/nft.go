@@ -25,7 +25,9 @@ type (
 		// positive. A value of 0 indicates no asset is set (yet).
 		AssetID uint `json:"assetId,omitempty"`
 		// Secret is set if this is a secret NFT.
-		Secret bool `json:"secret"`
+		Secret bool   `json:"secret"`
+		Title  string `json:"title"`
+		Desc   string `json:"desc"`
 	}
 
 	Storage interface {
@@ -71,8 +73,8 @@ func Extract(owner common.Address, acc tee.Account) (nfts []NFT) {
 }
 
 func (t *NFT) String() string {
-	return fmt.Sprintf("NFT{Token: %s, ID: %s, Owner: %s, AssetID: %d, Secret: %t}",
-		t.Token.String(), t.ID, t.Owner.String(), t.AssetID, t.Secret)
+	return fmt.Sprintf("NFT{Token: %s, ID: %s, Owner: %s, AssetID: %d, Secret: %t, Title: `%s`, Desc: `%s`}",
+		t.Token.String(), t.ID, t.Owner.String(), t.AssetID, t.Secret, t.Title, t.Desc)
 }
 
 func (t *NFT) Update(source NFT) {
@@ -81,7 +83,7 @@ func (t *NFT) Update(source NFT) {
 	} else if t.ID.Cmp(source.ID) != 0 {
 		panic("NFT.Update: ID mismatch")
 	}
-	if source.Owner != eth.Zero {
+	if source.Owner == eth.Zero {
 		t.Owner = source.Owner
 	}
 	if source.AssetID != 0 {
@@ -89,5 +91,11 @@ func (t *NFT) Update(source NFT) {
 	}
 	if source.Secret {
 		t.Secret = true
+	}
+	if source.Title != "" {
+		t.Title = source.Title
+	}
+	if source.Desc != "" {
+		t.Desc = source.Desc
 	}
 }

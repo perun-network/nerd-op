@@ -31,12 +31,14 @@ func New(nftStorage nft.Storage, assetStorage asset.Storage) *Server {
 		nfts:   nftStorage,
 		assets: assetStorage,
 	}
-	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet)
+	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet, http.MethodOptions)
 	const tokenIdSelector = "/{token:0x[0-9a-fA-F]{40}}/{id:[0-9]+}"
-	s.r.HandleFunc("/nft"+tokenIdSelector, s.handlePUTnft).Methods(http.MethodPut)
-	s.r.HandleFunc("/nft"+tokenIdSelector, s.handleGETnft).Methods(http.MethodGet)
-	s.r.HandleFunc("/nft"+tokenIdSelector+"/asset", s.handleGETnftAsset).Methods(http.MethodGet)
-	s.r.HandleFunc("/nfts", s.handleGETnfts).Methods(http.MethodGet)
+	s.r.HandleFunc("/nft"+tokenIdSelector, s.handlePUTnft).Methods(http.MethodPut, http.MethodOptions)
+	s.r.HandleFunc("/nft"+tokenIdSelector, s.handleGETnft).Methods(http.MethodGet, http.MethodOptions)
+	s.r.HandleFunc("/nft"+tokenIdSelector+"/asset", s.handleGETnftAsset).Methods(http.MethodGet, http.MethodOptions)
+	s.r.HandleFunc("/nfts", s.handleGETnfts).Methods(http.MethodGet, http.MethodOptions)
+	s.r.Use(mux.CORSMethodMiddleware(s.r))
+
 	return s
 }
 
@@ -59,11 +61,21 @@ func (s *Server) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	return http.ListenAndServeTLS(addr, certFile, keyFile, s.r)
 }
 
-func (s *Server) handleGETstatus(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleGETstatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	w.Write([]byte("OK"))
 }
 
 func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	s.handleNFTRequest(w, r, func(tkn nft.NFT) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		if err := json.NewEncoder(w).Encode(tkn); err != nil {
@@ -73,6 +85,11 @@ func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGETnfts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	tkns, err := s.nfts.GetAll()
 	if err != nil {
 		httpError(w, err.Error(), http.StatusInternalServerError)
@@ -85,6 +102,11 @@ func (s *Server) handleGETnfts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGETnftAsset(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	s.handleNFTRequest(w, r, func(tkn nft.NFT) {
 		ast, err := s.assets.Get(big.NewInt(int64(tkn.AssetID)))
 		if err != nil {
@@ -99,6 +121,11 @@ func (s *Server) handleGETnftAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleNFTRequest(w http.ResponseWriter, r *http.Request, handler func(nft.NFT)) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	var (
 		token, id = mustReadTokenID(r)
 		tkn, err  = s.nfts.Get(token, id)
@@ -115,6 +142,11 @@ func (s *Server) handleNFTRequest(w http.ResponseWriter, r *http.Request, handle
 }
 
 func (s *Server) handlePUTnft(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	var newtkn nft.NFT
 	if err := json.NewDecoder(r.Body).Decode(&newtkn); err != nil {
 		http.Error(w, "Error decoding token from payload: "+err.Error(), http.StatusBadRequest)
@@ -122,6 +154,12 @@ func (s *Server) handlePUTnft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, id := mustReadTokenID(r)
+
+	log.Debug("RECEIVED PUT")
+	log.Debugf("token: %v", token)
+	log.Debugf("id: %v", id)
+	log.Debugf("NewToken.Token: %v", newtkn.Token)
+	log.Debugf("NewToken.ID: %v", newtkn.ID)
 	if token != newtkn.Token || id.Cmp(newtkn.ID) != 0 {
 		httpError(w, "Token or ID mismatch between payload and URL", http.StatusBadRequest)
 		return
