@@ -13,6 +13,8 @@ type Config struct {
 	Port       uint16 `json:"port"`
 	AssetsPath string `json:"assetsPath"`
 	AssetsExt  string `json:"assetsExt"`
+	CertFile   string `json:"certFile"`
+	KeyFile    string `json:"keyFile"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {

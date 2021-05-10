@@ -56,7 +56,13 @@ func main() {
 	// inject new balances from operator
 	op.OnNewBalance(serv.UpdateBalance)
 	addr := servCfg.Addr()
-	if err := serv.ListenAndServe(addr); err != nil {
-		log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
+	if servCfg.CertFile != "" && servCfg.KeyFile != "" {
+		if err := serv.ListenAndServeTLS(addr, servCfg.CertFile, servCfg.KeyFile); err != nil {
+			log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
+		}
+	} else {
+		if err := serv.ListenAndServe(addr); err != nil {
+			log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
+		}
 	}
 }
