@@ -36,6 +36,6 @@ func TestNFTMemory(t *testing.T) {
 	m.Upsert(tkn)
 	get, err = m.Get(tkn.Token, tkn.ID)
 	assert.NoError(err)
-	assert.Equal(get, tkn)
+	assert.NotEqual(get, tkn)
 	assert.Equal(m.TotalSize(), 1)
 }
