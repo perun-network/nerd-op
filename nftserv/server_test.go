@@ -34,8 +34,9 @@ import (
 )
 
 const (
-	addr = "127.0.0.1:13443"
-	ext  = "pc"
+	addr              = "127.0.0.1:13443"
+	ext               = "pc"
+	whitelistedOrigin = "*"
 )
 
 func TestServer(t *testing.T) {
@@ -45,7 +46,7 @@ func TestServer(t *testing.T) {
 		nfts       = nft.NewMemory()
 		assetsDir  = createTmpAssetsDir(t, ext, 0, 1, 420)
 		assets, _  = asset.NewFileStorage(assetsDir)
-		srv        = nftserv.New(nfts, assets)
+		srv        = nftserv.New(nfts, assets, nftserv.ServerExtras{})
 		owner, acc = randomAccount(rng, 5)
 		tv         = acc.Values.OrderedValues()[0]
 		ids        = value.MustAsBigInts(tv.Value)

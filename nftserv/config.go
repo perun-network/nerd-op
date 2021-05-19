@@ -9,12 +9,19 @@ import (
 )
 
 type Config struct {
-	Host       string `json:"host"`
-	Port       uint16 `json:"port"`
-	AssetsPath string `json:"assetsPath"`
-	AssetsExt  string `json:"assetsExt"`
-	CertFile   string `json:"certFile"`
-	KeyFile    string `json:"keyFile"`
+	Host       string       `json:"host"`
+	Port       uint16       `json:"port"`
+	AssetsPath string       `json:"assetsPath"`
+	AssetsExt  string       `json:"assetsExt"`
+	CertFile   string       `json:"certFile"`
+	KeyFile    string       `json:"keyFile"`
+	Extra      ServerExtras `json:"extra"`
+}
+
+type ServerExtras struct {
+	WhitelistedOrigin    *string `json:"whitelistedOrigin"`
+	MaxTitleLength       *int    `json:"maxTitleLength"`
+	MaxDescriptionLength *int    `json:"maxDescriptionLength"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {

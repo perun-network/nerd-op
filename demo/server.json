@@ -2,5 +2,10 @@
 	"host": "127.0.0.1",
 	"port": 8440,
 	"assetsPath": "demo/assets",
-	"assetsExt": "png"
+	"assetsExt": "png",
+	"extra": {
+		"whitelistedOrigin": "*",
+		"maxTitleLength": 256,
+		"maxDescriptionLength": 1024
+	}
 }

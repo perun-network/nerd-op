@@ -52,7 +52,7 @@ func main() {
 		}
 	}()
 
-	serv := nftserv.New(nft.NewMemory(), ast)
+	serv := nftserv.New(nft.NewMemory(), ast, servCfg.Extra)
 	// inject new balances from operator
 	op.OnNewBalance(serv.UpdateBalance)
 	addr := servCfg.Addr()
