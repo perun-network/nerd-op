@@ -34,9 +34,8 @@ import (
 )
 
 const (
-	addr              = "127.0.0.1:13443"
-	ext               = "pc"
-	whitelistedOrigin = "*"
+	addr = "127.0.0.1:13443"
+	ext  = "pc"
 )
 
 func TestServer(t *testing.T) {
@@ -135,6 +134,17 @@ func TestServer(t *testing.T) {
 	require.NoError(err)
 	requireStatus(t, resp, http.StatusOK)
 	expectAsset(tkn.Token, tkn.ID, 420)
+
+	tkn.Title = strings.Repeat("pay_respect", 25)
+	resp, err = putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
+	require.NoError(err)
+	requireStatus(t, resp, http.StatusRequestEntityTooLarge)
+
+	tkn.Title = "Valid Title"
+	tkn.Desc = strings.Repeat("fubar", 210)
+	resp, err = putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
+	require.NoError(err)
+	requireStatus(t, resp, http.StatusRequestEntityTooLarge)
 }
 
 func requireStatus(t testing.TB, resp *http.Response, code int) {
