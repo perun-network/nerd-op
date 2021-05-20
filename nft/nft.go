@@ -83,7 +83,7 @@ func (t *NFT) Update(source NFT) {
 	} else if t.ID.Cmp(source.ID) != 0 {
 		panic("NFT.Update: ID mismatch")
 	}
-	if source.Owner == eth.Zero {
+	if source.Owner != eth.Zero {
 		t.Owner = source.Owner
 	}
 	if source.AssetID != 0 {
