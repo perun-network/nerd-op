@@ -38,11 +38,11 @@ func main() {
 	}
 	log.Info("NFT Server config loaded")
 
-	ast, err := asset.NewFileStorage(servCfg.AssetsPath)
+	ast, err := asset.NewFileStorage(servCfg.AssetsConfig.AssetsPath)
 	if err != nil {
 		log.Fatalf("Main: error opening assets storage: %v", err)
 	}
-	ast.SetExtension(servCfg.AssetsExt)
+	ast.SetExtension(servCfg.AssetsConfig.AssetsExt)
 	log.Info("Assets storage opened")
 
 	op := operator.SetupWithPrototypeEnclave(cfg, nil)
@@ -52,17 +52,11 @@ func main() {
 		}
 	}()
 
-	serv := nftserv.New(nft.NewMemory(), ast, servCfg.Extra)
+	serv := nftserv.New(nft.NewMemory(), ast, servCfg.ServerConfig)
 	// inject new balances from operator
 	op.OnNewBalance(serv.UpdateBalance)
-	addr := servCfg.Addr()
-	if servCfg.CertFile != "" && servCfg.KeyFile != "" {
-		if err := serv.ListenAndServeTLS(addr, servCfg.CertFile, servCfg.KeyFile); err != nil {
-			log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
-		}
-	} else {
-		if err := serv.ListenAndServe(addr); err != nil {
-			log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
-		}
+	addr := servCfg.ServerConfig.Addr()
+	if err := serv.Serve(); err != nil {
+		log.Errorf("Main: NFTServer.ListenAndServe(%s) stopped with error %v", addr, err)
 	}
 }

@@ -19,33 +19,19 @@ import (
 	"github.com/perun-network/nerd-op/nft"
 )
 
-var (
-	maxTitleLength       = 256
-	maxDescriptionLength = 1024
-	whitelistedOrigin    = "*"
-)
-
 type Server struct {
 	r      *mux.Router
 	nfts   nft.Storage
 	assets asset.Storage
+	cfg    ServerConfig
 }
 
-func New(nftStorage nft.Storage, assetStorage asset.Storage, extras ServerExtras) *Server {
-	if extras.WhitelistedOrigin != nil {
-		whitelistedOrigin = *extras.WhitelistedOrigin
-	}
-	if extras.MaxDescriptionLength != nil {
-		maxDescriptionLength = *extras.MaxDescriptionLength
-	}
-	if extras.MaxTitleLength != nil {
-		maxTitleLength = *extras.MaxTitleLength
-	}
-
+func New(nftStorage nft.Storage, assetStorage asset.Storage, cfg ServerConfig) *Server {
 	s := &Server{
 		r:      mux.NewRouter(),
 		nfts:   nftStorage,
 		assets: assetStorage,
+		cfg:    cfg,
 	}
 	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet, http.MethodOptions)
 	const tokenIdSelector = "/{token:0x[0-9a-fA-F]{40}}/{id:[0-9]+}"
@@ -55,7 +41,7 @@ func New(nftStorage nft.Storage, assetStorage asset.Storage, extras ServerExtras
 	s.r.HandleFunc("/nfts", s.handleGETnfts).Methods(http.MethodGet, http.MethodOptions)
 
 	s.r.Use(mux.CORSMethodMiddleware(s.r))
-	s.r.Use(AllowCORSForOrigin(whitelistedOrigin))
+	s.r.Use(AllowCORSForOrigin(cfg.WhitelistedOrigin))
 
 	return s
 }
@@ -84,6 +70,16 @@ func (s *Server) UpdateBalance(owner common.Address, acc tee.Account) {
 			log.Errorf("Server.UpdateBalance: Error upserting NFT %v: %v", nft, err)
 		}
 	}
+}
+
+func (s *Server) Serve() error {
+	addr := s.cfg.Addr()
+	cert := s.cfg.CertFile
+	key := s.cfg.KeyFile
+	if cert != "" && key != "" {
+		return s.ListenAndServeTLS(addr, cert, key)
+	}
+	return s.ListenAndServe(addr)
 }
 
 func (s *Server) ListenAndServe(addr string) error {
@@ -156,12 +152,12 @@ func (s *Server) handlePUTnft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(newtkn.Title) > maxTitleLength {
+	if len(newtkn.Title) > s.cfg.MaxTitleLength {
 		httpError(w, "NFT title too long", http.StatusRequestEntityTooLarge)
 		return
 	}
 
-	if len(newtkn.Desc) > maxDescriptionLength {
+	if len(newtkn.Desc) > s.cfg.MaxDescriptionLength {
 		httpError(w, "NFT description too long", http.StatusRequestEntityTooLarge)
 		return
 	}

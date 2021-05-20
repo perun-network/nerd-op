@@ -34,18 +34,23 @@ import (
 )
 
 const (
-	addr = "127.0.0.1:13443"
+	host = "127.0.0.1"
+	port = 13443
 	ext  = "pc"
 )
 
 func TestServer(t *testing.T) {
 	var (
-		require    = require.New(t)
-		rng        = ptest.Prng(t)
-		nfts       = nft.NewMemory()
-		assetsDir  = createTmpAssetsDir(t, ext, 0, 1, 420)
-		assets, _  = asset.NewFileStorage(assetsDir)
-		srv        = nftserv.New(nfts, assets, nftserv.ServerExtras{})
+		require             = require.New(t)
+		rng                 = ptest.Prng(t)
+		nfts                = nft.NewMemory()
+		assetsDir           = createTmpAssetsDir(t, ext, 0, 1, 420)
+		assets, _           = asset.NewFileStorage(assetsDir)
+		defaultServerConfig = nftserv.ServerConfig{
+			Host: host,
+			Port: port,
+		}
+		srv        = nftserv.New(nfts, assets, defaultServerConfig)
 		owner, acc = randomAccount(rng, 5)
 		tv         = acc.Values.OrderedValues()[0]
 		ids        = value.MustAsBigInts(tv.Value)
@@ -54,7 +59,7 @@ func TestServer(t *testing.T) {
 	assets.SetExtension(ext)
 
 	go func() {
-		srverr <- srv.ListenAndServe(addr)
+		srverr <- srv.Serve()
 	}()
 
 	runtime.Gosched()
@@ -160,7 +165,7 @@ func requireStatus(t testing.TB, resp *http.Response, code int) {
 
 func url(elems ...interface{}) string {
 	var s strings.Builder
-	s.WriteString("http://" + addr)
+	s.WriteString(fmt.Sprintf("http://%s:%v", host, port))
 	for _, el := range elems {
 		s.WriteString(fmt.Sprintf("/%v", el))
 	}
