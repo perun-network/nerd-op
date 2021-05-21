@@ -47,8 +47,9 @@ func TestServer(t *testing.T) {
 		assetsDir           = createTmpAssetsDir(t, ext, 0, 1, 420)
 		assets, _           = asset.NewFileStorage(assetsDir)
 		defaultServerConfig = nftserv.ServerConfig{
-			Host: host,
-			Port: port,
+			Host:           host,
+			Port:           port,
+			MaxPayloadSize: 1024,
 		}
 		srv        = nftserv.New(nfts, assets, defaultServerConfig)
 		owner, acc = randomAccount(rng, 5)
@@ -141,11 +142,6 @@ func TestServer(t *testing.T) {
 	expectAsset(tkn.Token, tkn.ID, 420)
 
 	tkn.Title = strings.Repeat("pay_respect", 25)
-	resp, err = putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
-	require.NoError(err)
-	requireStatus(t, resp, http.StatusRequestEntityTooLarge)
-
-	tkn.Title = "Valid Title"
 	tkn.Desc = strings.Repeat("fubar", 210)
 	resp, err = putAsJSON(url("nft", tkn.Token.String(), tkn.ID), tkn)
 	require.NoError(err)

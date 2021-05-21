@@ -12,23 +12,22 @@ const defaultWhitelistedOrigin = "*"
 
 type (
 	Config struct {
-		AssetsConfig AssetsConfig `json:"assetsConfig"`
-		ServerConfig ServerConfig `json:"serverConfig"`
+		Assets AssetsConfig `json:"assets"`
+		Server ServerConfig `json:"server"`
 	}
 
 	AssetsConfig struct {
-		AssetsPath string `json:"assetsPath"`
-		AssetsExt  string `json:"assetsExt"`
+		Path string `json:"path"`
+		Ext  string `json:"ext"`
 	}
 
 	ServerConfig struct {
-		Host                 string `json:"host"`
-		Port                 uint16 `json:"port"`
-		CertFile             string `json:"certFile"`
-		KeyFile              string `json:"keyFile"`
-		WhitelistedOrigin    string `json:"whitelistedOrigin"`
-		MaxTitleLength       int    `json:"maxTitleLength"`
-		MaxDescriptionLength int    `json:"maxDescriptionLength"`
+		Host              string `json:"host"`
+		Port              uint16 `json:"port"`
+		CertFile          string `json:"certFile"`
+		KeyFile           string `json:"keyFile"`
+		WhitelistedOrigin string `json:"whitelistedOrigin"`
+		MaxPayloadSize    int    `json:"maxPayloadSize"`
 	}
 )
 
@@ -43,8 +42,8 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("decoding server nerd-op config: %w", err)
 	}
 
-	if c.ServerConfig.WhitelistedOrigin == "" {
-		c.ServerConfig.WhitelistedOrigin = defaultWhitelistedOrigin
+	if c.Server.WhitelistedOrigin == "" {
+		c.Server.WhitelistedOrigin = defaultWhitelistedOrigin
 	}
 
 	return c, nil

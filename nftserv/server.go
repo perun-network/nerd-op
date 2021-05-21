@@ -146,19 +146,13 @@ func (s *Server) handleNFTRequest(w http.ResponseWriter, r *http.Request, handle
 }
 
 func (s *Server) handlePUTnft(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.MaxPayloadSize > 0 && r.ContentLength >= int64(s.cfg.MaxPayloadSize) {
+		http.Error(w, "NFT title and description too large", http.StatusRequestEntityTooLarge)
+	}
+
 	var newtkn nft.NFT
 	if err := json.NewDecoder(r.Body).Decode(&newtkn); err != nil {
 		http.Error(w, "Error decoding token from payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if len(newtkn.Title) > s.cfg.MaxTitleLength {
-		httpError(w, "NFT title too long", http.StatusRequestEntityTooLarge)
-		return
-	}
-
-	if len(newtkn.Desc) > s.cfg.MaxDescriptionLength {
-		httpError(w, "NFT description too long", http.StatusRequestEntityTooLarge)
 		return
 	}
 

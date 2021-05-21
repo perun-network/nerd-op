@@ -1,13 +1,12 @@
 {
-	"assetsConfig": {
-		"assetsPath": "demo/assets",
-		"assetsExt": "png"
+	"assets": {
+		"path": "demo/assets",
+		"ext": "png"
 	},
-	"serverConfig": {
+	"server": {
 		"host": "127.0.0.1",
 		"port": 8440,
 		"whitelistedOrigin": "*",
-		"maxTitleLength": 256,
-		"maxDescriptionLength": 1024
+		"maxPayloadSize": 1280
 	}
 }
