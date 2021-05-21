@@ -8,14 +8,28 @@ import (
 	"os"
 )
 
-type Config struct {
-	Host       string `json:"host"`
-	Port       uint16 `json:"port"`
-	AssetsPath string `json:"assetsPath"`
-	AssetsExt  string `json:"assetsExt"`
-	CertFile   string `json:"certFile"`
-	KeyFile    string `json:"keyFile"`
-}
+const defaultWhitelistedOrigin = "*"
+
+type (
+	Config struct {
+		Assets AssetsConfig `json:"assets"`
+		Server ServerConfig `json:"server"`
+	}
+
+	AssetsConfig struct {
+		Path string `json:"path"`
+		Ext  string `json:"ext"`
+	}
+
+	ServerConfig struct {
+		Host              string `json:"host"`
+		Port              uint16 `json:"port"`
+		CertFile          string `json:"certFile"`
+		KeyFile           string `json:"keyFile"`
+		WhitelistedOrigin string `json:"whitelistedOrigin"`
+		MaxPayloadSize    int    `json:"maxPayloadSize"`
+	}
+)
 
 func ReadConfig(filePath string) (*Config, error) {
 	file, err := os.Open(filePath)
@@ -24,10 +38,18 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	c := new(Config)
-	return c, json.NewDecoder(file).Decode(c)
+	if err := json.NewDecoder(file).Decode(c); err != nil {
+		return nil, fmt.Errorf("decoding server nerd-op config: %w", err)
+	}
+
+	if c.Server.WhitelistedOrigin == "" {
+		c.Server.WhitelistedOrigin = defaultWhitelistedOrigin
+	}
+
+	return c, nil
 }
 
 // Addr returns the string "{Host}:{Port}"
-func (c *Config) Addr() string {
+func (c *ServerConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }

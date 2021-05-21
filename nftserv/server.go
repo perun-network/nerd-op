@@ -23,13 +23,15 @@ type Server struct {
 	r      *mux.Router
 	nfts   nft.Storage
 	assets asset.Storage
+	cfg    ServerConfig
 }
 
-func New(nftStorage nft.Storage, assetStorage asset.Storage) *Server {
+func New(nftStorage nft.Storage, assetStorage asset.Storage, cfg ServerConfig) *Server {
 	s := &Server{
 		r:      mux.NewRouter(),
 		nfts:   nftStorage,
 		assets: assetStorage,
+		cfg:    cfg,
 	}
 	s.r.HandleFunc("/status", s.handleGETstatus).Methods(http.MethodGet, http.MethodOptions)
 	const tokenIdSelector = "/{token:0x[0-9a-fA-F]{40}}/{id:[0-9]+}"
@@ -37,9 +39,26 @@ func New(nftStorage nft.Storage, assetStorage asset.Storage) *Server {
 	s.r.HandleFunc("/nft"+tokenIdSelector, s.handleGETnft).Methods(http.MethodGet, http.MethodOptions)
 	s.r.HandleFunc("/nft"+tokenIdSelector+"/asset", s.handleGETnftAsset).Methods(http.MethodGet, http.MethodOptions)
 	s.r.HandleFunc("/nfts", s.handleGETnfts).Methods(http.MethodGet, http.MethodOptions)
+
 	s.r.Use(mux.CORSMethodMiddleware(s.r))
+	s.r.Use(AllowCORSForOrigin(cfg.WhitelistedOrigin))
 
 	return s
+}
+
+// AllowCORSForOrigin allows cross-origin-resource-sharing requests to succeed
+// for the given origin.
+func AllowCORSForOrigin(origin string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+			} else {
+				next.ServeHTTP(w, r)
+			}
+		})
+	}
 }
 
 // UpdateBalance is the balance handler that can be injected into the operator
@@ -53,6 +72,16 @@ func (s *Server) UpdateBalance(owner common.Address, acc tee.Account) {
 	}
 }
 
+func (s *Server) Serve() error {
+	addr := s.cfg.Addr()
+	cert := s.cfg.CertFile
+	key := s.cfg.KeyFile
+	if cert != "" && key != "" {
+		return s.ListenAndServeTLS(addr, cert, key)
+	}
+	return s.ListenAndServe(addr)
+}
+
 func (s *Server) ListenAndServe(addr string) error {
 	return http.ListenAndServe(addr, s.r)
 }
@@ -62,20 +91,10 @@ func (s *Server) ListenAndServeTLS(addr, certFile, keyFile string) error {
 }
 
 func (s *Server) handleGETstatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	w.Write([]byte("OK"))
 }
 
 func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	s.handleNFTRequest(w, r, func(tkn nft.NFT) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		if err := json.NewEncoder(w).Encode(tkn); err != nil {
@@ -85,11 +104,6 @@ func (s *Server) handleGETnft(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGETnfts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	tkns, err := s.nfts.GetAll()
 	if err != nil {
 		httpError(w, err.Error(), http.StatusInternalServerError)
@@ -102,11 +116,6 @@ func (s *Server) handleGETnfts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGETnftAsset(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	s.handleNFTRequest(w, r, func(tkn nft.NFT) {
 		ast, err := s.assets.Get(big.NewInt(int64(tkn.AssetID)))
 		if err != nil {
@@ -121,11 +130,6 @@ func (s *Server) handleGETnftAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleNFTRequest(w http.ResponseWriter, r *http.Request, handler func(nft.NFT)) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	var (
 		token, id = mustReadTokenID(r)
 		tkn, err  = s.nfts.Get(token, id)
@@ -142,9 +146,8 @@ func (s *Server) handleNFTRequest(w http.ResponseWriter, r *http.Request, handle
 }
 
 func (s *Server) handlePUTnft(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
+	if s.cfg.MaxPayloadSize > 0 && r.ContentLength >= int64(s.cfg.MaxPayloadSize) {
+		http.Error(w, "NFT title and description too large", http.StatusRequestEntityTooLarge)
 	}
 
 	var newtkn nft.NFT

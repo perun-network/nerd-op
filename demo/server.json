@@ -1,6 +1,12 @@
 {
-	"host": "127.0.0.1",
-	"port": 8440,
-	"assetsPath": "demo/assets",
-	"assetsExt": "png"
+	"assets": {
+		"path": "demo/assets",
+		"ext": "png"
+	},
+	"server": {
+		"host": "127.0.0.1",
+		"port": 8440,
+		"whitelistedOrigin": "*",
+		"maxPayloadSize": 1280
+	}
 }
